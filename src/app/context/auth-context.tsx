@@ -30,22 +30,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Mock authentication - accept any email with password "admin123"
-        if (password === 'admin123') {
-          const userData: User = {
-            email,
-            name: 'Admin User',
-          };
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-          resolve(true);
-        } else {
-          resolve(false);
+
+     try{
+      const response = await fetch("http://localhost:8000/api/token/",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            username:email,
+            password:password
+          })
+        });
+
+        const data = await response.json();
+        const Bearer = data.access;
+        if(!response.ok){
+          return false;
         }
-      }, 800); // Simulate network delay
-    });
+        //Save to local Storage
+        localStorage.setItem("access",data.access)
+        localStorage.setItem('refresh',data.refresh)
+
+        const profileResponse = await fetch("http://localhost:8000/api/user/profile/",
+          {
+            method:"GET",
+            headers:{
+              "Authorization":`${"Bearer " + Bearer}`,
+            }
+          }
+        );
+
+        if(!profileResponse.ok){
+          return false;
+        }
+        const profileData = await profileResponse.json();
+        console.log(profileData);
+        const userData: User = {
+          email:profileData.email,
+          name:profileData.name,
+
+        };
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        return true;
+        
+     }catch(error){
+        console.log(error)
+        console.error("Login failed")
+        return false;
+     }
+
+    // return new Promise((resolve) => {
+    //   setTimeout(() => {
+    //     // Mock authentication - accept any email with password "admin123"
+    //     if (true) {
+    //       const userData: User = {
+    //         email,
+    //         name: 'Admin User',
+    //       };
+       
+        
+        
+    //       setUser(userData);
+    //       localStorage.setItem('user', JSON.stringify(userData));
+    //       resolve(true);
+    //     } else {
+    //       resolve(false);
+    //     }
+    //   }, 800); // Simulate network delay
+    // });
   };
 
   const logout = () => {
