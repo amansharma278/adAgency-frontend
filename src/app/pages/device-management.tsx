@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock } from 'lucide-react';
 import { mockDevices, mockVideos, Device } from '../lib/mock-data';
@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Progress } from '../components/ui/progress';
+import { makeGetRequest } from '../lib/helperBearar';
 import {
   Select,
   SelectContent,
@@ -30,8 +31,9 @@ export function DeviceManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const [addDevice, setDevices] = useState <[Device] | []> ([]); 
 
-  const filteredDevices = mockDevices.filter((device) => {
+  const filteredDevices = addDevice.filter((device) => {
     const matchesSearch =
       device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       device.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,6 +57,30 @@ export function DeviceManagement() {
     const video = mockVideos.find((v) => v.id === videoId);
     return video?.title || 'Unknown';
   };
+
+  const getAllDevicesList=async()=>{
+  const response = await makeGetRequest("/device/")
+  setDevices(response.data?.map((item) =>{
+       return {
+         id: item.id,
+        "name": item.device_name,
+        "deviceId": item.device_id,
+        location: item.location,
+        status: item.is_online ?'online' : 'offline',
+        currentlyPlaying: "null",
+        lastActive: item,
+        storageUsed: 77,
+        storageTotal: 88,
+        assignedAds: ['ad','ad2'],
+        uptime: 9
+       }
+  }))
+    // console.log(response.data)
+  }
+
+  useEffect(()=>{
+    getAllDevicesList();
+  },[])
 
   return (
     <div className="space-y-6">
