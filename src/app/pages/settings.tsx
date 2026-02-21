@@ -7,6 +7,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Separator } from '../components/ui/separator';
 import { toast } from 'sonner';
+import { useAuth } from '../context/auth-context';
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ export function Settings() {
   const [autoCleanup, setAutoCleanup] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [storageLimit, setStorageLimit] = useState('80');
-
+  const {user} = useAuth();
   const handleSaveProfile = () => {
     toast.success('Profile updated successfully');
   };
@@ -88,16 +89,16 @@ export function Settings() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="first-name">First Name</Label>
-                  <Input id="first-name" defaultValue="Admin" />
+                  <Input id="first-name" defaultValue={user?.first_name} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="last-name">Last Name</Label>
-                  <Input id="last-name" defaultValue="User" />
+                  <Input id="last-name" defaultValue={user?.last_name} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue="admin@addisplay.com" />
+                <Input id="email" type="email" defaultValue={user?.email} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>

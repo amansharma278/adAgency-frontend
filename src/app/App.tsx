@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
-import { Toaster } from './components/ui/sonner';
+// import { Toaster } from './components/ui/sonner';
+import { Toaster } from 'sonner';
 import { ThemeProvider } from './context/theme-context';
 import { AuthProvider, useAuth } from './context/auth-context';
 import { ProtectedRoute } from './components/protected-route';
@@ -81,12 +82,13 @@ function AppContent() {
                   </main>
                 </div>
                 
-                <Toaster position="top-right" />
+                
               </div>
             </ProtectedRoute>
           }
         />
       </Routes>
+     
     </BrowserRouter>
   );
 }
@@ -95,6 +97,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+         <Toaster position="bottom-right" />
         <AppContent />
       </AuthProvider>
     </ThemeProvider>

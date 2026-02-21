@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
+import { makePostRequest } from '../lib/helperBearar'
+import { makeGetRequest } from '../lib/helperBearar';
 interface User {
   email: string;
-  name: string;
+  first_name: string;
+  last_name: string;
+
 }
 
 interface AuthContextType {
@@ -31,76 +34,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     // Simulate API call
 
-     try{
-      const response = await fetch("http://localhost:8000/api/token/",{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json"
-          },
-          body:JSON.stringify({
-            username:email,
-            password:password
-          })
-        });
-
-        const data = await response.json();
-        const Bearer = data.access;
-        if(!response.ok){
-          return false;
-        }
-        //Save to local Storage
-        localStorage.setItem("access",data.access)
-        localStorage.setItem('refresh',data.refresh)
-
-        const profileResponse = await fetch("http://localhost:8000/api/user/profile/",
-          {
-            method:"GET",
-            headers:{
-              "Authorization":`${"Bearer " + Bearer}`,
-            }
-          }
-        );
-
-        if(!profileResponse.ok){
-          return false;
-        }
-        const profileData = await profileResponse.json();
-        console.log(profileData);
-        const userData: User = {
-          email:profileData.email,
-          name:profileData.name,
-
-        };
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
-        return true;
-        
-     }catch(error){
-        console.log(error)
-        console.error("Login failed")
+    try {
+      const data = await makePostRequest("/token/", { username: email, password: password });
+      console.log("This is access token from makePostRequest")
+      console.log("Tokennnnnnnnnnnnnnnnnnnnnnnnnnnnnnn:", data.data.access);
+      console.log("End")
+      console.log(data.status)
+      if (!data.status) {
         return false;
-     }
+      }
+      // Save to local Storage
 
-    // return new Promise((resolve) => {
-    //   setTimeout(() => {
-    //     // Mock authentication - accept any email with password "admin123"
-    //     if (true) {
-    //       const userData: User = {
-    //         email,
-    //         name: 'Admin User',
-    //       };
-       
-        
-        
-    //       setUser(userData);
-    //       localStorage.setItem('user', JSON.stringify(userData));
-    //       resolve(true);
-    //     } else {
-    //       resolve(false);
-    //     }
-    //   }, 800); // Simulate network delay
-    // });
-  };
+      localStorage.setItem("access", data.data.access)
+      // console.log(data.access);
+      localStorage.setItem('refresh', data.data.refresh)
+
+      const profileResponse = await makeGetRequest("/user/profile/")
+
+      console.log("profileResponse", profileResponse.data.email);
+      console.log(!profileResponse)
+      if (!profileResponse.status) {
+        return false;
+      }
+      const userData: User = {
+        email: profileResponse.data.email,
+        first_name: profileResponse.data.first_name,
+        last_name: profileResponse.data.last_name,
+
+      };
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      return true;
+    } catch (error) {
+      console.log(error)
+      console.error("Login failed")
+      return false;
+    } };
 
   const logout = () => {
     setUser(null);

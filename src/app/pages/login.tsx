@@ -27,7 +27,7 @@ export function Login() {
 
     try {
       const success = await login(email, password);
-      
+      console.log("success",success);
       if (success) {
         toast.success('Login successful! Welcome back.');
         navigate('/');

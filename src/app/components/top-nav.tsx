@@ -137,7 +137,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.name || 'Admin User'}
+                    {user?.first_name || 'Admin User'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {user?.email || 'admin@addisplay.com'}
