@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon } from 'lucide-react';
 import { mockVideos, mockDevices, Video } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { PaginationControls } from '../components/pagination-controls';
 import {makePostAuthrized} from '../lib/helperBearar'
+import { makeGetRequest } from '../lib/helperBearar';
 import {
   Dialog,
   DialogContent,
@@ -43,8 +44,9 @@ export function AdManagement() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [adsVideo, setAdsVideo] = useState<[Video]|[]>([]);
 
-  const filteredVideos = mockVideos.filter((video) => {
+  const filteredVideos = adsVideo.filter((video) => {
     const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || video.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -110,8 +112,35 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
     
     setUploadModalOpen(false);
   };
-
- 
+const videoGet=async()=>{
+   try{
+    const videRes = await makeGetRequest("/ads/");
+    console.log(videRes.data)
+    setAdsVideo(videRes?.data?.map((item)=>{
+      return {
+        "id":item.id,
+        "title":item.title,
+        "description":item.description,
+        "thumbnail":'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400',
+         duration:item.duration,
+        "playCountLimit": item.play_limit,
+        currentPlayCount: 10,
+        assignedDevices: ["d1","d2"],
+        status: item.is_active? 'active' : 'inactive',
+        startDate: item.start_date,
+        endDate: item.end_date,
+        priority:  'medium' ,
+        createdAt:item.created_at
+      };
+    }));
+      
+    }catch(error){
+      console.log(error)
+    }
+}
+ useEffect(()=>{
+   videoGet();
+ },[])
   
 
   return (
