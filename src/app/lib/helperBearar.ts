@@ -22,6 +22,30 @@ console.log(data.email);
 
 }
 
+export const makePostAuthrized=async(path, payload)=>{
+        console.log(baseUrl)
+    const response =await fetch(baseUrl+path,{
+        method: "POST",
+        headers:{
+            "Content-Type": "application/json",
+            "Authorization":`${"Bearer " + localStorage.getItem("access")}`,
+        },
+        body:JSON.stringify({
+            ...payload
+        })
+    });
+
+    const data = await response.json()
+console.log(data.email);
+    if(!response.ok){
+        return {"status": false};
+    }
+
+   return {data, "status": true};
+
+}
+
+
 export const makeGetRequest=async(path)=>{
     const response = await fetch(baseUrl + path, {
         method:"GET",

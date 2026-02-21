@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon } from 'lucide-react';
 import { mockVideos, mockDevices, Video } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { PaginationControls } from '../components/pagination-controls';
+import {makePostAuthrized} from '../lib/helperBearar'
 import {
   Dialog,
   DialogContent,
@@ -60,11 +61,58 @@ export function AdManagement() {
     setDeleteDialogOpen(false);
     setSelectedVideo(null);
   };
+const baseUrl = import.meta.env.VITE_BASE_URL;
+ const [selectedFile, setSelectedFile] = useState("");
 
-  const handleUpload = () => {
-    toast.success('Video uploaded successfully');
+ const [addData, setAddData] = useState({
+  title:"",
+  description:"",
+  video:"",
+  duration:"10",
+  play_limit:"",
+  start_date:"",
+  end_date:""
+
+ })
+ 
+  const handleUpload = async() => {
+    
+      try{
+        const {title, description,video,duration,play_limit,start_date,end_date} = addData;
+
+        if(!title || !description || !duration ||!play_limit){
+          toast.error("You need to filed the all the input field")
+        }
+       const formData = new FormData();
+       formData.append("video", selectedFile);
+        const response = await fetch(baseUrl+"/ads/video/upload/",{
+          method:"POST",
+          headers:{
+             "Authorization":`${"Bearer " + localStorage.getItem("access")}`
+          },
+          body:formData,
+        })
+        
+        const data = await response.json();
+        console.log(data)
+      const  videoid = data.id;
+       const s =  makePostAuthrized("/ads/create/", {title, description,video:videoid,duration,play_limit,start_date,end_date})
+       console.log(s);
+        
+        toast.success('Video uploaded successfully');
+
+    }catch(error){
+          console.log(error)
+    }
+
+    
+
+    
     setUploadModalOpen(false);
   };
+
+ 
+  
 
   return (
     <div className="space-y-6">
@@ -267,9 +315,9 @@ export function AdManagement() {
               <Label htmlFor="video-file">Video File</Label>
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
                 <Plus className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Click to upload or drag and drop
-                </p>
+                <input type='file' className="text-sm text-gray-600 dark:text-gray-400" onChange={(e)=>setSelectedFile(e.target.files[0])}/>
+                
+                
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                   MP4, MOV or AVI (max. 100MB)
                 </p>
@@ -277,11 +325,12 @@ export function AdManagement() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
-              <Input id="title" placeholder="Enter video title" />
+              <Input onChange={(e)=>setAddData({...addData,title:e.target.value})} id="title" placeholder="Enter video title" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
+              onChange={(e)=>setAddData({...addData,description:e.target.value})}
                 id="description"
                 placeholder="Enter video description"
                 rows={3}
@@ -290,17 +339,17 @@ export function AdManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="start-date">Start Date</Label>
-                <Input id="start-date" type="date" />
+                <Input onChange={(e)=>setAddData({...addData,start_date:e.target.value})} id="start-date" type="date" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="end-date">End Date</Label>
-                <Input id="end-date" type="date" />
+                <Input onChange={(e)=>setAddData({...addData,end_date:e.target.value})} id="end-date" type="date" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="play-count">Play Count Limit</Label>
-                <Input id="play-count" type="number" placeholder="1000" />
+                <Input onChange={(e)=>setAddData({...addData,play_limit:e.target.value})} id="play-count" type="number" placeholder="1000" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
@@ -316,7 +365,7 @@ export function AdManagement() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Assign to Devices</Label>
               <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 max-h-48 overflow-y-auto">
                 <div className="space-y-2">
@@ -336,7 +385,7 @@ export function AdManagement() {
                   ))}
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadModalOpen(false)}>
