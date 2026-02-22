@@ -29,7 +29,29 @@ export interface Device {
   assignedAds: string[];
   uptime: number;
 }
+export interface DeviceResponse {
+  id: number,
+  device_name: string,
+  location: string,
+  is_online: boolean,
+  last_active: string,
+  device_id: string,
+  assigned_ads: string[]
+}
 
+export interface VideoRes {
+  "id": number,
+  "title": string,
+  "description":string,
+  "duration": number,
+  "play_limit": number,
+  "priority": number,
+  "start_date": string,
+  "end_date": string,
+  "is_active": boolean,
+  "created_at": string,
+  "video": number,
+}
 export interface PlaybackLog {
   id: string;
   deviceId: string;
@@ -353,11 +375,11 @@ export const generateAnalyticsData = () => {
   const days = 30;
   const data = [];
   const today = new Date();
-  
+
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    
+
     data.push({
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       plays: Math.floor(Math.random() * 300) + 150,
@@ -365,7 +387,7 @@ export const generateAnalyticsData = () => {
       completionRate: Math.floor(Math.random() * 20) + 75
     });
   }
-  
+
   return data;
 };
 

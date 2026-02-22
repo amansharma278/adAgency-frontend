@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon } from 'lucide-react';
-import { mockVideos, mockDevices, Video } from '../lib/mock-data';
+import { mockVideos, mockDevices, Video,VideoRes } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { PaginationControls } from '../components/pagination-controls';
 import {makePostAuthrized} from '../lib/helperBearar'
-import { makeGetRequest } from '../lib/helperBearar';
+import { makeGetRequest,makeDeleteRequest } from '../lib/helperBearar';
 import {
   Dialog,
   DialogContent,
@@ -58,13 +58,21 @@ export function AdManagement() {
     currentPage * pageSize
   );
 
-  const handleDelete = () => {
+  const handleDelete =async () => {
+    console.log("helo")
+  const delteRes =  await makeDeleteRequest("/device/9/")
+  console.log(delteRes)
+  if(!delteRes.status){
+    // console.error(delteRes.);
+    
+  }
     toast.success('Video deleted successfully');
     setDeleteDialogOpen(false);
     setSelectedVideo(null);
   };
+  handleDelete();
 const baseUrl = import.meta.env.VITE_BASE_URL;
- const [selectedFile, setSelectedFile] = useState("");
+ const [selectedFile, setSelectedFile] = useState<string|Blob>("");
 
  const [addData, setAddData] = useState({
   title:"",
@@ -116,7 +124,7 @@ const videoGet=async()=>{
    try{
     const videRes = await makeGetRequest("/ads/");
     console.log(videRes.data)
-    setAdsVideo(videRes?.data?.map((item)=>{
+    setAdsVideo(videRes?.data?.map((item: VideoRes)=>{
       return {
         "id":item.id,
         "title":item.title,

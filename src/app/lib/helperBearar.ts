@@ -22,6 +22,24 @@ console.log(data.email);
 
 }
 
+export const makeDeleteRequest=async(path:string)=>{
+        console.log(baseUrl)
+    const response =await fetch(baseUrl+path,{
+        method: "DELETE",
+        headers:{
+            "Content-Type": "application/json",
+            "Authorization":`${"Bearer " + localStorage.getItem("access")}`,
+        },
+    
+    });
+
+    const data = await response.json()
+     if(!response.ok){
+        return {"status": false};
+    }
+
+   return {data, "status": true};
+}
 export const makePostAuthrized=async(path, payload)=>{
         console.log(baseUrl)
     const response =await fetch(baseUrl+path,{

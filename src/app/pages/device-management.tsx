@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock } from 'lucide-react';
-import { mockDevices, mockVideos, Device } from '../lib/mock-data';
+import { mockDevices, mockVideos, Device,DeviceResponse } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Progress } from '../components/ui/progress';
-import { makeGetRequest } from '../lib/helperBearar';
+import { makeGetRequest ,makeDeleteRequest} from '../lib/helperBearar';
 import {
   Select,
   SelectContent,
@@ -32,6 +32,7 @@ export function DeviceManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [addDevice, setDevices] = useState <[Device] | []> ([]); 
+ 
 
   const filteredDevices = addDevice.filter((device) => {
     const matchesSearch =
@@ -46,7 +47,14 @@ export function DeviceManagement() {
     toast.success(`Restarting ${device.name}...`);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async() => {
+    
+      const delteRes =  await makeDeleteRequest(`/devicew/${selectedDevice?.id}/`)
+      console.log()
+      if(!delteRes.status){
+         console.error("Error");
+        
+      }
     toast.success('Device removed successfully');
     setDeleteDialogOpen(false);
     setSelectedDevice(null);
@@ -60,7 +68,7 @@ export function DeviceManagement() {
 
   const getAllDevicesList=async()=>{
   const response = await makeGetRequest("/device/")
-  setDevices(response.data?.map((item) =>{
+  setDevices(response.data?.map((item:DeviceResponse) =>{
        return {
          id: item.id,
         "name": item.device_name,
@@ -68,15 +76,16 @@ export function DeviceManagement() {
         location: item.location,
         status: item.is_online ?'online' : 'offline',
         currentlyPlaying: "null",
-        lastActive: item,
+        lastActive: item.last_active,
         storageUsed: 77,
         storageTotal: 88,
-        assignedAds: ['ad','ad2'],
+        assignedAds: item.assigned_ads,
         uptime: 9
        }
   }))
     // console.log(response.data)
   }
+
 
   useEffect(()=>{
     getAllDevicesList();

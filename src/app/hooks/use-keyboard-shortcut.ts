@@ -33,7 +33,7 @@ export function useKeyboardShortcut(shortcuts: KeyboardShortcut[]) {
 // Global keyboard shortcuts
 export const globalShortcuts: KeyboardShortcut[] = [
   {
-    key: 'k',
+    key: 'k'fccccccccccccccccccccccc
     ctrlKey: true,
     description: 'Search',
     callback: () => {
