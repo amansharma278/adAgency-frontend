@@ -49,7 +49,7 @@ export function DeviceManagement() {
 
   const handleDelete = async() => {
     
-      const delteRes =  await makeDeleteRequest(`/devicew/${selectedDevice?.id}/`)
+      const delteRes =  await makeDeleteRequest(`/device/${selectedDevice?.id}/`)
       console.log()
       if(!delteRes.status){
          console.error("Error");
