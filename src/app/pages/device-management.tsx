@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock } from 'lucide-react';
-import { mockDevices, mockVideos, Device,DeviceResponse } from '../lib/mock-data';
+import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock, Plus } from 'lucide-react';
+import { mockDevices, mockVideos, Device, DeviceResponse } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Progress } from '../components/ui/progress';
-import { makeGetRequest ,makeDeleteRequest} from '../lib/helperBearar';
+import { makeGetRequest, makeDeleteRequest, makePostRequest, makePostAuthrized } from '../lib/helperBearar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -31,8 +40,14 @@ export function DeviceManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  const [addDevice, setDevices] = useState <[Device] | []> ([]); 
- 
+  const [addDevice, setDevices] = useState<[Device] | []>([]);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({
+    device_name:"",
+    device_id:"",
+    secret_key:"",
+    location:""
+  });
 
   const filteredDevices = addDevice.filter((device) => {
     const matchesSearch =
@@ -47,14 +62,13 @@ export function DeviceManagement() {
     toast.success(`Restarting ${device.name}...`);
   };
 
-  const handleDelete = async() => {
-    
-      const delteRes =  await makeDeleteRequest(`/device/${selectedDevice?.id}/`)
-      console.log()
-      if(!delteRes.status){
-         console.error("Error");
-        
-      }
+  const handleDelete = async () => {
+
+    const delteRes = await makeDeleteRequest(`/device/${selectedDevice?.id}/`)
+    if (!delteRes.status) {
+      console.error("Error");
+
+    }
     toast.success('Device removed successfully');
     setDeleteDialogOpen(false);
     setSelectedDevice(null);
@@ -66,41 +80,95 @@ export function DeviceManagement() {
     return video?.title || 'Unknown';
   };
 
-  const getAllDevicesList=async()=>{
-  const response = await makeGetRequest("/device/")
-  setDevices(response.data?.map((item:DeviceResponse) =>{
-       return {
-         id: item.id,
+  const getAllDevicesList = async () => {
+    const response = await makeGetRequest("/device/")
+    setDevices(response.data?.map((item: DeviceResponse) => {
+      return {
+        id: item.id,
         "name": item.device_name,
         "deviceId": item.device_id,
         location: item.location,
-        status: item.is_online ?'online' : 'offline',
+        status: item.is_online ? 'online' : 'offline',
         currentlyPlaying: "null",
         lastActive: item.last_active,
         storageUsed: 77,
         storageTotal: 88,
         assignedAds: item.assigned_ads,
         uptime: 9
-       }
-  }))
+      }
+    }))
     // console.log(response.data)
   }
 
-
-  useEffect(()=>{
+const createDevice = async () => {
+  const respnse = await makePostAuthrized("/device/create/",{
+  device_name:deviceInfo.device_name,
+  device_id:deviceInfo.device_id,
+  secret_key:deviceInfo.secret_key,
+  location:deviceInfo.location
+});
+if(!respnse.status){
+  toast.error("Error creating device")
+  return;
+}
+toast.success("Device created successfully")
+setUploadModalOpen(false);
+getAllDevicesList();
+console.log(respnse)
+}
+  useEffect(() => {
     getAllDevicesList();
-  },[])
+  }, [])
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold text-gray-900 dark:text-white mb-2">
           Device Management
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Monitor and manage all connected display devices
         </p>
+        <Button onClick={() => setUploadModalOpen(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Create Device
+                </Button>
+        <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Assign New Device</DialogTitle>
+              <DialogDescription>
+                Fill in the details to assign a new device to your network. You can manage
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+             
+              <div className="space-y-2">
+                <Label htmlFor="title">Device Name</Label>
+                <Input onChange={(e)=>setDeviceInfo({...deviceInfo,device_name:e.target.value})} id="device" placeholder="Enter device name" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="deviceid">Device ID</Label>
+                <Input onChange={(e)=>setDeviceInfo({...deviceInfo,device_id:e.target.value})} id="deviceid" placeholder="Enter unique device ID" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secreatkey">Secret Key</Label>
+                <Input onChange={(e)=>setDeviceInfo({...deviceInfo,secret_key:e.target.value})} id="secreatkey" placeholder="Enter secret key" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input onChange={(e)=>setDeviceInfo({...deviceInfo,location:e.target.value})} id="location" placeholder="Enter device location" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setUploadModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createDevice}>Asign Device</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -181,9 +249,8 @@ export function DeviceManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div
-                          className={`w-2 h-2 rounded-full ${
-                            device.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
-                          }`}
+                          className={`w-2 h-2 rounded-full ${device.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                            }`}
                         ></div>
                         <Badge
                           variant={device.status === 'online' ? 'default' : 'secondary'}

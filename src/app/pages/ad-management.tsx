@@ -59,18 +59,16 @@ export function AdManagement() {
   );
 
   const handleDelete =async () => {
-    console.log("helo")
-  const delteRes =  await makeDeleteRequest("/device/9/")
-  console.log(delteRes)
-  if(!delteRes.status){
-    // console.error(delteRes.);
     
+  const delteRes =  await makeDeleteRequest(`/ads/delete/${selectedVideo?.id}/`)
+  if(!delteRes.status){
+    toast.error("Error deleting video")
+    return;
   }
     toast.success('Video deleted successfully');
     setDeleteDialogOpen(false);
     setSelectedVideo(null);
   };
-  handleDelete();
 const baseUrl = import.meta.env.VITE_BASE_URL;
  const [selectedFile, setSelectedFile] = useState<string|Blob>("");
 
