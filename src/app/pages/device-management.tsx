@@ -41,7 +41,7 @@ export function DeviceManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [addDevice, setDevices] = useState<[Device] | []>([]);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [createDeviceModalOpen, setCreateDeviceModalOpen] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({
     device_name:"",
     device_id:"",
@@ -107,12 +107,13 @@ const createDevice = async () => {
   secret_key:deviceInfo.secret_key,
   location:deviceInfo.location
 });
+
 if(!respnse.status){
   toast.error("Error creating device")
   return;
 }
 toast.success("Device created successfully")
-setUploadModalOpen(false);
+setCreateDeviceModalOpen(false);
 getAllDevicesList();
 console.log(respnse)
 }
@@ -130,11 +131,11 @@ console.log(respnse)
         <p className="text-gray-600 dark:text-gray-400">
           Monitor and manage all connected display devices
         </p>
-        <Button onClick={() => setUploadModalOpen(true)} className="gap-2">
+        <Button onClick={() => setCreateDeviceModalOpen(true)} className="gap-2">
                   <Plus className="w-4 h-4" />
                   Create Device
                 </Button>
-        <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+        <Dialog open={createDeviceModalOpen} onOpenChange={setCreateDeviceModalOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Assign New Device</DialogTitle>
@@ -162,7 +163,7 @@ console.log(respnse)
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setUploadModalOpen(false)}>
+              <Button variant="outline" onClick={() => setCreateDeviceModalOpen(false)}>
                 Cancel
               </Button>
               <Button onClick={createDevice}>Asign Device</Button>
