@@ -66,6 +66,7 @@ export function AdManagement() {
     return;
   }
     toast.success('Video deleted successfully');
+    videoGet();
     setDeleteDialogOpen(false);
     setSelectedVideo(null);
   };

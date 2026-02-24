@@ -195,7 +195,7 @@ export const mockVideos: Video[] = [
 
 export const mockDevices: Device[] = [
   {
-    id: 'd1',
+    id: '16',
     name: 'Main Store Display',
     deviceId: 'DEV-001-MST',
     location: 'Downtown Store - Main Entrance',

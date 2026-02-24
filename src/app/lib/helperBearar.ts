@@ -56,7 +56,7 @@ export const makePostAuthrized=async(path, payload)=>{
     const data = await response.json()
 console.log(data.email);
     if(!response.ok){
-        return {"status": false};
+        return {"status": false,data};
     }
 
    return {data, "status": true};

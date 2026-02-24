@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock, Plus } from 'lucide-react';
-import { mockDevices, mockVideos, Device, DeviceResponse } from '../lib/mock-data';
+import { Search, Eye, RotateCw, Trash2, HardDrive, MapPin, Clock, Plus,SquarePlus  } from 'lucide-react';
+import { mockDevices, mockVideos, Device, DeviceResponse, VideoRes } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -42,12 +42,16 @@ export function DeviceManagement() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [addDevice, setDevices] = useState<[Device] | []>([]);
   const [createDeviceModalOpen, setCreateDeviceModalOpen] = useState(false);
+  const [isCreateDeviceLoding,setIsCreateDeviceLoding] = useState(false);
+  const [asignAdModel, setAsignAdModel]= useState(false);
+  const [storedAds, setStoredAds] = useState<number[]>([]);
   const [deviceInfo, setDeviceInfo] = useState({
     device_name:"",
     device_id:"",
     secret_key:"",
     location:""
   });
+  const [adsList, setAdsList] = useState<[VideoRes]|[]>([]);
 
   const filteredDevices = addDevice.filter((device) => {
     const matchesSearch =
@@ -99,8 +103,41 @@ export function DeviceManagement() {
     }))
     // console.log(response.data)
   }
+  const getAllAdsList = async () => {
+    const response = await makeGetRequest("/ads/")
+    console.log(response.data)
+    setAdsList(response.data)
+    
+  }
 
+  const handleAssignAd =async () => {
+
+    console.log(storedAds)
+    const response = await makePostAuthrized(`/device/${selectedDevice?.id}/assign-ad/`,{
+      ads:storedAds.map((id)=>Number(id))
+    })
+    if(!response.status){
+      toast.error(response.data.message || "Error assigning ads to device")
+      return;
+    }else{
+
+      toast.success(response.data.message || "Ads assigned to device successfully")
+    }
+
+    setAsignAdModel(false);
+  }
+  const adCheckHandler = (e) => {
+    console.log(e.target.checked)
+    console.log(e.target.value)
+    if (e.target.checked) {
+      setStoredAds([...storedAds, e.target.value])
+    } else {
+      setStoredAds(storedAds.filter((id) => id !== e.target.value))
+    }
+    console.log(storedAds)
+  }
 const createDevice = async () => {
+  setIsCreateDeviceLoding(true);
   const respnse = await makePostAuthrized("/device/create/",{
   device_name:deviceInfo.device_name,
   device_id:deviceInfo.device_id,
@@ -108,17 +145,21 @@ const createDevice = async () => {
   location:deviceInfo.location
 });
 
+setIsCreateDeviceLoding(false)
 if(!respnse.status){
-  toast.error("Error creating device")
+  toast.error(respnse.data.message)
   return;
 }
-toast.success("Device created successfully")
+toast.success(respnse.data.message)
+
+
 setCreateDeviceModalOpen(false);
 getAllDevicesList();
 console.log(respnse)
 }
   useEffect(() => {
     getAllDevicesList();
+    getAllAdsList();
   }, [])
 
   return (
@@ -138,7 +179,7 @@ console.log(respnse)
         <Dialog open={createDeviceModalOpen} onOpenChange={setCreateDeviceModalOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Assign New Device</DialogTitle>
+              <DialogTitle >Assign New Device</DialogTitle>
               <DialogDescription>
                 Fill in the details to assign a new device to your network. You can manage
               </DialogDescription>
@@ -166,12 +207,64 @@ console.log(respnse)
               <Button variant="outline" onClick={() => setCreateDeviceModalOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={createDevice}>Asign Device</Button>
+              <Button disabled={isCreateDeviceLoding} onClick={createDevice}>Asign Device</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
+   <Dialog open={asignAdModel} onOpenChange={setAsignAdModel}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign Advertisement to Device</DialogTitle>
+            <DialogDescription>
+              You can set scheduling and priority for the ad.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            
+           
+            {/* <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+              onChange={(e)=>setAddData({...addData,description:e.target.value})}
+                id="description"
+                placeholder="Enter video description"
+                rows={3}
+              />
+            </div> */}
+           
+           
+            <div className="space-y-2">
+              <Label>Select Advertisement to Assign</Label>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
+                  {adsList.slice(0, 6).map((ad) => (
+                    <label
+                      key={ad.id}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer"
+                    >
+                      <input type="checkbox" className="rounded" onChange={adCheckHandler} value={ad.id}/>
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        {ad.title}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                        {ad.description}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAsignAdModel(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAssignAd}>Assign Advertisement</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Filters */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -313,6 +406,19 @@ console.log(respnse)
                           }}
                         >
                           <Trash2 className="w-4 h-4" />
+                          
+                        </Button>
+                         <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            setAsignAdModel(true)
+                            setSelectedDevice(device);
+                          setStoredAds([]);
+                          }}
+                        >
+                           <SquarePlus />
                         </Button>
                       </div>
                     </td>
