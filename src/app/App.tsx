@@ -11,6 +11,7 @@ import { Dashboard } from './pages/dashboard';
 import { AdManagement } from './pages/ad-management';
 import { DeviceManagement } from './pages/device-management';
 import { DeviceDetail } from './pages/device-detail';
+import { GroupManagement } from './pages/group-management';
 import { PlaybackControl } from './pages/playback-control';
 import { Analytics } from './pages/analytics';
 import { Settings } from './pages/settings';
@@ -72,6 +73,7 @@ function AppContent() {
                         <Route path="/ads" element={<AdManagement />} />
                         <Route path="/devices" element={<DeviceManagement />} />
                         <Route path="/devices/:deviceId" element={<DeviceDetail />} />
+                        <Route path="/groups" element={<GroupManagement />} />
                         <Route path="/playback" element={<PlaybackControl />} />
                         <Route path="/analytics" element={<Analytics />} />
                         <Route path="/notifications" element={<Notifications />} />

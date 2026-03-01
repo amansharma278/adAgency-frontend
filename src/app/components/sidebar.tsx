@@ -9,7 +9,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 import { cn } from '../components/ui/utils';
 
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Ad Management', href: '/ads', icon: Video },
   { name: 'Devices', href: '/devices', icon: Monitor },
+  { name: 'Group Management', href: '/groups', icon: Users },
   { name: 'Playback Control', href: '/playback', icon: Play },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Notifications', href: '/notifications', icon: Bell },
