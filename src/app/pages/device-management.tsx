@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Progress } from '../components/ui/progress';
 import { makeGetRequest, makeDeleteRequest, makePostRequest, makePostAuthrized } from '../lib/helperBearar';
+import { MultiSelectDropdown } from '../components/multi-select-dropdown';
 import {
   Dialog,
   DialogContent,
@@ -44,7 +45,7 @@ export function DeviceManagement() {
   const [createDeviceModalOpen, setCreateDeviceModalOpen] = useState(false);
   const [isCreateDeviceLoding,setIsCreateDeviceLoding] = useState(false);
   const [asignAdModel, setAsignAdModel]= useState(false);
-  const [storedAds, setStoredAds] = useState<number[]>([]);
+  const [storedAds, setStoredAds] = useState<(string | number)[]>([]);
   const [deviceInfo, setDeviceInfo] = useState({
     device_name:"",
     device_id:"",
@@ -125,16 +126,6 @@ export function DeviceManagement() {
     }
 
     setAsignAdModel(false);
-  }
-  const adCheckHandler = (e) => {
-    console.log(e.target.checked)
-    console.log(e.target.value)
-    if (e.target.checked) {
-      setStoredAds([...storedAds, e.target.value])
-    } else {
-      setStoredAds(storedAds.filter((id) => id !== e.target.value))
-    }
-    console.log(storedAds)
   }
 const createDevice = async () => {
   setIsCreateDeviceLoding(true);
@@ -222,40 +213,14 @@ console.log(respnse)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            
-           
-            {/* <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-              onChange={(e)=>setAddData({...addData,description:e.target.value})}
-                id="description"
-                placeholder="Enter video description"
-                rows={3}
-              />
-            </div> */}
-           
-           
-            <div className="space-y-2">
-              <Label>Select Advertisement to Assign</Label>
-              <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 max-h-48 overflow-y-auto">
-                <div className="space-y-2">
-                  {adsList.slice(0, 6).map((ad) => (
-                    <label
-                      key={ad.id}
-                      className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer"
-                    >
-                      <input type="checkbox" className="rounded" onChange={adCheckHandler} value={ad.id}/>
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {ad.title}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                        {ad.description}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <MultiSelectDropdown
+              items={adsList}
+              selectedIds={storedAds}
+              onSelectionChange={setStoredAds}
+              label="Select Advertisements to Assign"
+              placeholder="Search advertisements..."
+              maxHeight="240px"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAsignAdModel(false)}>
