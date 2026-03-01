@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon, SquarePlus } from 'lucide-react';
 import { MultiSelectDropdown } from '../components/multi-select-dropdown';
-import { mockVideos, mockDevices, Video,VideoRes } from '../lib/mock-data';
+import { mockVideos, mockDevices,VideoRes } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -42,10 +42,10 @@ export function AdManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<VideoRes | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [adsVideo, setAdsVideo] = useState<Video[]>([]);
+  const [adsVideo, setAdsVideo] = useState<VideoRes[]>([]);
   const [assignDevicesModalOpen, setAssignDevicesModalOpen] = useState(false);
   const [storedDevices, setStoredDevices] = useState<(string | number)[]>([]);
   const [devicesList, setDevicesList] = useState<any[]>([]);
@@ -137,7 +137,7 @@ const videoGet=async()=>{
          duration:item.duration,
         "playCountLimit": item.play_limit,
         currentPlayCount: 10,
-        assignedDevices: ["d1","d2"],
+        assignedDevices: item.devices || [],
         status: item.is_active? 'active' : 'inactive',
         startDate: item.start_date,
         endDate: item.end_date,
@@ -306,10 +306,10 @@ const handleAssignDevices = async () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {video.currentPlayCount.toLocaleString()}
+                        {video.currentPlayCount?.toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        of {video.playCountLimit.toLocaleString()}
+                        of {video.play_limit?.toLocaleString()}
                       </p>
                     </div>
                   </td>
@@ -325,9 +325,9 @@ const handleAssignDevices = async () => {
                     <div className="text-xs text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{new Date(video.startDate).toLocaleDateString()}</span>
+                        <span>{new Date(video.start_date).toLocaleDateString()}</span>
                       </div>
-                      <div className="mt-1">to {new Date(video.endDate).toLocaleDateString()}</div>
+                      <div className="mt-1">to {new Date(video.end_date).toLocaleDateString()}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -377,9 +377,10 @@ const handleAssignDevices = async () => {
                         variant="ghost"
                         className="h-8 w-8 p-0"
                         onClick={() => {
+                          console.log(video);
                           setSelectedVideo(video);
                           setAssignDevicesModalOpen(true);
-                          setStoredDevices([]);
+                          setStoredDevices(video.assignedDevices||[]);
                         }}
                       >
                         <SquarePlus className="w-4 h-4" />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Users, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users, Eye, SquarePlus, MonitorPlay } from 'lucide-react';
 import { MultiSelectDropdown } from '../components/multi-select-dropdown';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -32,6 +32,8 @@ export interface Group {
   name: string;
   memberCount: number;
   members: (string | number)[];
+  adCount?: number;
+  assignedAds?: (string | number)[];
   createdAt?: string;
   status?: 'active' | 'inactive';
 }
@@ -47,7 +49,11 @@ export function GroupManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [groups, setGroups] = useState<Group[]>([]);
   const [membersList, setMembersList] = useState<any[]>([]);
+  const [adsList, setAdsList] = useState<any[]>([]);
   const [storedMembers, setStoredMembers] = useState<(string | number)[]>([]);
+  const [storedAds, setStoredAds] = useState<(string | number)[]>([]);
+  const [assignAdsModalOpen, setAssignAdsModalOpen] = useState(false);
+  const [assignAdsLoading, setAssignAdsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [createData, setCreateData] = useState({
     name: '',
@@ -74,6 +80,8 @@ export function GroupManagement() {
           name: item.name,
           memberCount: item.devices?.length || 0,
           members: item.members || [],
+          adCount: item.ads?.length || 0,
+          assignedAds: item.ads || [],
           createdAt: item.created_at,
           status: 'active',
         })) || []
@@ -100,9 +108,26 @@ export function GroupManagement() {
     }
   };
 
+  // Fetch ads list for assignment
+  const fetchAds = async () => {
+    try {
+      const response = await makeGetRequest('/ads/');
+      const items =
+        response.data?.map((a: any) => ({
+          id: a.id,
+          title: a.title || `Ad ${a.id}`,
+          description: a.description || '',
+        })) || [];
+      setAdsList(items);
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+    }
+  };
+
   useEffect(() => {
     fetchGroups();
     fetchMembers();
+    fetchAds();
   }, []);
 
   // Create group
@@ -117,6 +142,7 @@ export function GroupManagement() {
       const response = await makePostAuthrized('/user/group/create/', {
         name: createData.name,
         device_ids: storedMembers.map((id) => Number(id)),
+        ad_ids: storedAds.map((id) => Number(id)),
       });
 
       if (!response.status) {
@@ -128,6 +154,7 @@ export function GroupManagement() {
       setCreateModalOpen(false);
       setCreateData({ name: '' });
       setStoredMembers([]);
+      setStoredAds([]);
       fetchGroups();
     } catch (error) {
       console.error('Error creating group:', error);
@@ -154,6 +181,34 @@ export function GroupManagement() {
     } catch (error) {
       console.error('Error deleting group:', error);
       toast.error('Failed to delete group');
+    }
+  };
+
+  // Assign ads to group
+  const handleAssignAds = async () => {
+    if (!selectedGroup) return;
+
+    setAssignAdsLoading(true);
+    try {
+      const response = await makePostAuthrized(`/user/group/${selectedGroup.id}/assign-ads/`, {
+        ad_ids: storedAds.map((id) => Number(id)),
+      });
+
+      if (!response.status) {
+        toast.error(response.data?.message || 'Error assigning ads');
+        return;
+      }
+
+      toast.success('Ads assigned successfully');
+      setAssignAdsModalOpen(false);
+      setStoredAds([]);
+      setSelectedGroup(null);
+      fetchGroups();
+    } catch (error) {
+      console.error('Error assigning ads:', error);
+      toast.error('Failed to assign ads');
+    } finally {
+      setAssignAdsLoading(false);
     }
   };
 
@@ -236,8 +291,9 @@ export function GroupManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Members
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Created
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">                  Ads
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">                  Created
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
@@ -267,6 +323,14 @@ export function GroupManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <MonitorPlay className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {group.adCount || 0}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {group.createdAt ? new Date(group.createdAt).toLocaleDateString() : 'N/A'}
                     </span>
@@ -292,6 +356,18 @@ export function GroupManagement() {
                         }}
                       >
                         <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          setSelectedGroup(group);
+                          setStoredAds(group.assignedAds || []);
+                          setAssignAdsModalOpen(true);
+                        }}
+                      >
+                        <SquarePlus className="w-4 h-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -367,6 +443,20 @@ export function GroupManagement() {
                 {storedMembers.length} member(s) selected
               </p>
             </div>
+            <div className="space-y-2">
+              <Label>Add Ads</Label>
+              <MultiSelectDropdown
+                items={adsList}
+                selectedIds={storedAds}
+                onSelectionChange={setStoredAds}
+                label="Select Ads to Assign"
+                placeholder="Search ads..."
+                maxHeight="300px"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {storedAds.length} ad(s) selected
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -375,6 +465,7 @@ export function GroupManagement() {
                 setCreateModalOpen(false);
                 setCreateData({ name: '' });
                 setStoredMembers([]);
+                setStoredAds([]);
               }}
             >
               Cancel
@@ -421,6 +512,45 @@ export function GroupManagement() {
             </Button>
             <Button disabled={loading} onClick={handleUpdateMembers}>
               {loading ? 'Updating...' : 'Update Members'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Assign Ads Modal */}
+      <Dialog open={assignAdsModalOpen} onOpenChange={setAssignAdsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign Ads to Group</DialogTitle>
+            <DialogDescription>
+              Select one or more ads to assign to "{selectedGroup?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <MultiSelectDropdown
+              items={adsList}
+              selectedIds={storedAds}
+              onSelectionChange={setStoredAds}
+              label="Select Ads to Assign"
+              placeholder="Search ads..."
+              maxHeight="300px"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {storedAds.length} ad(s) selected
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssignAdsModalOpen(false);
+                setSelectedGroup(null);
+                setStoredAds([]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button disabled={assignAdsLoading} onClick={handleAssignAds}>
+              {assignAdsLoading ? 'Assigning...' : 'Assign Ads'}
             </Button>
           </DialogFooter>
         </DialogContent>

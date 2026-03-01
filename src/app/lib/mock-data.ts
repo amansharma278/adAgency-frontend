@@ -51,6 +51,12 @@ export interface VideoRes {
   "is_active": boolean,
   "created_at": string,
   "video": number,
+  devices: number[],
+  status: 'active' | 'inactive' | 'paused';
+  thumbnail: string;
+  currentPlayCount: number;
+  assignedDevices: string[];
+
 }
 export interface PlaybackLog {
   id: string;

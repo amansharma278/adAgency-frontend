@@ -111,21 +111,24 @@ export function DeviceManagement() {
     
   }
 
-  const handleAssignAd =async () => {
-
-    console.log(storedAds)
-    const response = await makePostAuthrized(`/device/${selectedDevice?.id}/assign-ad/`,{
-      ads:storedAds.map((id)=>Number(id))
-    })
-    if(!response.status){
-      toast.error(response.data.message || "Error assigning ads to device")
+  const handleAssignAd = async () => {
+    console.log(storedAds);
+    const response = await makePostAuthrized(`/device/${selectedDevice?.id}/assign-ad/`, {
+      ads: storedAds.map((id) => Number(id)),
+    });
+    if (!response.status) {
+      toast.error(response.data.message || "Error assigning ads to device");
       return;
-    }else{
-
-      toast.success(response.data.message || "Ads assigned to device successfully")
     }
 
+    toast.success(response.data.message || "Ads assigned to device successfully");
+
+    // refresh devices list so table reflects updated assignedAds
+    await getAllDevicesList();
+    // clear state
     setAsignAdModel(false);
+    setStoredAds([]);
+    setSelectedDevice(null);
   }
 const createDevice = async () => {
   setIsCreateDeviceLoding(true);
@@ -380,7 +383,7 @@ console.log(respnse)
                           onClick={() => {
                             setAsignAdModel(true)
                             setSelectedDevice(device);
-                          setStoredAds([]);
+                          setStoredAds(device.assignedAds || []);
                           }}
                         >
                            <SquarePlus />
