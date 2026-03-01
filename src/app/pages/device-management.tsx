@@ -219,7 +219,7 @@ console.log(respnse)
               onSelectionChange={setStoredAds}
               label="Select Advertisements to Assign"
               placeholder="Search advertisements..."
-              maxHeight="240px"
+              maxHeight="500px"
             />
           </div>
           <DialogFooter>
