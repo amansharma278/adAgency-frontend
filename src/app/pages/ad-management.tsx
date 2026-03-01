@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Pause, Play, Calendar, MonitorPlay, AwardIcon, SquarePlus } from 'lucide-react';
+import { MultiSelectDropdown } from '../components/multi-select-dropdown';
 import { mockVideos, mockDevices, Video,VideoRes } from '../lib/mock-data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -44,7 +45,11 @@ export function AdManagement() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [adsVideo, setAdsVideo] = useState<[Video]|[]>([]);
+  const [adsVideo, setAdsVideo] = useState<Video[]>([]);
+  const [assignDevicesModalOpen, setAssignDevicesModalOpen] = useState(false);
+  const [storedDevices, setStoredDevices] = useState<(string | number)[]>([]);
+  const [devicesList, setDevicesList] = useState<any[]>([]);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   const filteredVideos = adsVideo.filter((video) => {
     const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -70,7 +75,7 @@ export function AdManagement() {
     setDeleteDialogOpen(false);
     setSelectedVideo(null);
   };
-const baseUrl = import.meta.env.VITE_BASE_URL;
+const baseUrl = (import.meta as any).env?.VITE_BASE_URL || '';
  const [selectedFile, setSelectedFile] = useState<string|Blob>("");
 
  const [addData, setAddData] = useState({
@@ -147,7 +152,54 @@ const videoGet=async()=>{
 }
  useEffect(()=>{
    videoGet();
+   getAllDevices();
  },[])
+
+const getAllDevices = async () => {
+  try{
+    const res = await makeGetRequest('/device/');
+    const items = res.data?.map((d: any) => ({ id: d.id, title: d.device_name || d.name || d.device_id, description: d.location || '' })) || [];
+    setDevicesList(items);
+  }catch(err){
+    console.error(err);
+  }
+}
+
+const handleAssignDevices = async () => {
+  if (!selectedVideo) return;
+  setAssignLoading(true);
+  // keep previous state to revert on failure
+  const prevState = adsVideo;
+  // optimistic update: set assignedDevices to storedDevices
+  try {
+    const newAssigned = storedDevices.map((id) => String(id));
+    setAdsVideo((prev) =>
+      prev.map((v) => (v.id === selectedVideo.id ? { ...v, assignedDevices: newAssigned } : v))
+    );
+
+    const response = await makePostAuthrized(`/ads/${selectedVideo?.id}/assign-devices/`, {
+      device_ids: storedDevices.map((id) => Number(id)),
+    });
+
+    if (!response.status) {
+      // revert
+      setAdsVideo(prevState);
+      toast.error(response.data?.message || 'Error assigning devices');
+      return;
+    }
+
+    toast.success(response.data?.message || 'Devices assigned successfully');
+    setAssignDevicesModalOpen(false);
+    setStoredDevices([]);
+  } catch (err) {
+    console.error(err);
+    // revert optimistic update
+    setAdsVideo(prevState);
+    toast.error('Failed to assign devices');
+  } finally {
+    setAssignLoading(false);
+  }
+};
   
 
   return (
@@ -320,6 +372,18 @@ const videoGet=async()=>{
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          setSelectedVideo(video);
+                          setAssignDevicesModalOpen(true);
+                          setStoredDevices([]);
+                        }}
+                      >
+                        <SquarePlus className="w-4 h-4" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -351,7 +415,7 @@ const videoGet=async()=>{
               <Label htmlFor="video-file">Video File</Label>
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
                 <Plus className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <input type='file' className="text-sm text-gray-600 dark:text-gray-400" onChange={(e)=>setSelectedFile(e.target.files[0])}/>
+                <input type='file' className="text-sm text-gray-600 dark:text-gray-400" onChange={(e:any)=>setSelectedFile(e.target.files?.[0] ?? "")}/>
                 
                 
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
@@ -428,6 +492,36 @@ const videoGet=async()=>{
               Cancel
             </Button>
             <Button onClick={handleUpload}>Upload Video</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Devices Modal */}
+      <Dialog open={assignDevicesModalOpen} onOpenChange={setAssignDevicesModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign Devices to Advertisement</DialogTitle>
+            <DialogDescription>
+              Select one or more devices to assign this advertisement to.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <MultiSelectDropdown
+              items={devicesList}
+              selectedIds={storedDevices}
+              onSelectionChange={setStoredDevices}
+              label="Select Devices to Assign"
+              placeholder="Search devices..."
+              maxHeight="400px"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDevicesModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button disabled={assignLoading} onClick={handleAssignDevices}>
+              {assignLoading ? 'Assigning...' : 'Assign Devices'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
